@@ -13,6 +13,8 @@ UEnemyBTTask_FollowPlayer::UEnemyBTTask_FollowPlayer()
 
 }
 
+//task that runs when player has been spotted
+//chase the player but try to move to an assigned position around the player (so as to not clump up with other enemies)
 EBTNodeResult::Type UEnemyBTTask_FollowPlayer::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	FNavLocation Location{};
@@ -24,6 +26,7 @@ EBTNodeResult::Type UEnemyBTTask_FollowPlayer::ExecuteTask(UBehaviorTreeComponen
 	TObjectPtr<UBlackboardComponent> BlackboardComponent = AIController->GetBlackboardComponent();
 	const TObjectPtr<APawn> Player = GetWorld()->GetFirstPlayerController()->GetPawn();
 
+	//null checks
 	if (!IsValid(Player) || !IsValid(AIPawn) || !IsValid(BlackboardComponent) || !IsValid(PositionManager))
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString("Follow Player Failed"));
@@ -33,7 +36,7 @@ EBTNodeResult::Type UEnemyBTTask_FollowPlayer::ExecuteTask(UBehaviorTreeComponen
 	}
 	
 
-
+	//checks if this unit is ranged or melee
 
 	if (AIPawn->IsRanged)
 	{
@@ -43,7 +46,8 @@ EBTNodeResult::Type UEnemyBTTask_FollowPlayer::ExecuteTask(UBehaviorTreeComponen
 	{
 		AttackRange = BlackboardComponent->GetValueAsFloat("MeleeRange");
 	}
-	
+
+	//if the unit hasn't been given a position, assign a position (with the position manager)
 	if (!AIPawn->AssignedManagerPosition)
 	{
 		AIPawn->PositionIndex = PositionManager->GetIndex(AIPawn->GetActorLocation(), AttackRange);
@@ -51,12 +55,13 @@ EBTNodeResult::Type UEnemyBTTask_FollowPlayer::ExecuteTask(UBehaviorTreeComponen
 		AIPawn->AssignedManagerPosition = true;
 	}
 
-	
+	// get the position you should move to
 	FVector PlayerPos = Player->GetActorLocation();
 	FVector TargetPos = FindPointOnCircle(PlayerPos, AIPawn->AssignedAngle, AttackRange*RangeBufferValue);
 	
 	const TObjectPtr<UNavigationSystemV1> NavSystem = UNavigationSystemV1::GetCurrent(GetWorld());
 
+	//checking if in range to attack, if not move to the position you are assigned
 	bool IsInRange = AIPawn->GetInRange();
 	if (!IsInRange)
 	{
@@ -70,9 +75,12 @@ EBTNodeResult::Type UEnemyBTTask_FollowPlayer::ExecuteTask(UBehaviorTreeComponen
 	FVector DistanceToPlayer = PlayerPos - AIPawn->GetActorLocation();
 	FVector DistanceToPosition = TargetPos - AIPawn->GetActorLocation();
 
+	//if you are in range to attack set "in range" to true
 	if (DistanceToPlayer.Size() <= AttackRange)
 	{
 		AIPawn->SetInRange(true);
+		
+		//if you haven't reached your position yet but are within an acceptable range of it, start attacking (flip bool in blackboard)
 		if (DistanceToPosition.Size() <= AcceptableRadius * 5)
 		{
 			BlackboardComponent->SetValueAsBool(BlackboardKey.SelectedKeyName, true);
@@ -88,6 +96,7 @@ EBTNodeResult::Type UEnemyBTTask_FollowPlayer::ExecuteTask(UBehaviorTreeComponen
 	return EBTNodeResult::Succeeded;
 }
 
+//get your position around the player from your assigned angle
 FVector UEnemyBTTask_FollowPlayer::FindPointOnCircle(FVector center, float angle, float radius)
 {
 	FVector AngleVector = FVector::Zero();

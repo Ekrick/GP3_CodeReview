@@ -22,7 +22,7 @@ EBTNodeResult::Type UEnemyBTTask_AttackPlayer::ExecuteTask(UBehaviorTreeComponen
 	const TObjectPtr<AEnemyBase> AIPawn = Cast<AEnemyBase>(AIController->GetPawn());
 	const TObjectPtr<APawn> Player = GetWorld()->GetFirstPlayerController()->GetPawn();
 
-		
+	// null checks
 	if (!IsValid(Player) || !IsValid(AIPawn) || !IsValid(BlackboardComponent) || !IsValid(PositionManager))
 	{
 		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
@@ -31,7 +31,8 @@ EBTNodeResult::Type UEnemyBTTask_AttackPlayer::ExecuteTask(UBehaviorTreeComponen
 
 
 	bool Ranged = AIPawn->IsRanged;
-	
+
+	//checks if this unit is ranged or melee
 	if (Ranged)
 	{
 		AttackRange = BlackboardComponent->GetValueAsFloat("ProjectileRange");
@@ -41,7 +42,11 @@ EBTNodeResult::Type UEnemyBTTask_AttackPlayer::ExecuteTask(UBehaviorTreeComponen
 		AttackRange = BlackboardComponent->GetValueAsFloat("MeleeRange");
 	}
 
+	
 	FVector DistanceToPlayer = Player->GetActorLocation() - AIPawn->GetActorLocation();
+
+	//if we are not within attack range of the player, flip the bool in the blackboard to false
+	//also reset the angle position, you will be given a new one in the FollowPlayer-task
 	if (DistanceToPlayer.Size() > AttackRange)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Red, FString("NOT IN RANGE"));
@@ -52,6 +57,7 @@ EBTNodeResult::Type UEnemyBTTask_AttackPlayer::ExecuteTask(UBehaviorTreeComponen
 		BlackboardComponent->SetValueAsBool(BlackboardKey.SelectedKeyName, false);
 	}
 
+	// look at the player when you attack it
 	AIPawn->LookAtTarget();
 
 	FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);

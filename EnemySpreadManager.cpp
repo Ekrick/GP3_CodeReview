@@ -17,12 +17,13 @@ void UEnemySpreadManager::OnWorldBeginPlay(UWorld& InWorld)
 
 }
 
+//method to get a position around the player
 int UEnemySpreadManager::GetIndex(FVector pawnPosition, float range)
 {
 	int PositionIndex {};
 	
 	FVector PlayerPosition;
-	
+	//get location of the player
 	TObjectPtr<APawn> Player = GetWorld()->GetFirstPlayerController()->GetPawn();
 	if (!IsValid(Player))
 	{
@@ -31,7 +32,8 @@ int UEnemySpreadManager::GetIndex(FVector pawnPosition, float range)
 	PlayerPosition = Player->GetActorLocation();
 
 	FVector CurrentPosition ;
-	
+
+	//search through the list of angles to find the one closest to you
 	for (int i = 0; i < NumberOfPositions; i++)
 	{
 		FVector AngleVector = FVector::Zero();
@@ -40,7 +42,8 @@ int UEnemySpreadManager::GetIndex(FVector pawnPosition, float range)
 		AngleVector *= range;
 
 		FVector TempPosition = PlayerPosition + AngleVector;
-		
+
+		//find the angle position that is closest to you current position
 		if (FreeSpots[i])
 		{
 			if (i == 0 || CheckCloser(pawnPosition, CurrentPosition, TempPosition) )
@@ -50,10 +53,13 @@ int UEnemySpreadManager::GetIndex(FVector pawnPosition, float range)
 			}
 		}
 	}
+
+	//reserve the angle position for this unit
 	FreeSpots[PositionIndex] = false;
 	return PositionIndex;
 }
 
+//create a list of angles around the player
 void UEnemySpreadManager::GeneratePositions()
 {
 	float TAU = 6.28f;
@@ -66,6 +72,7 @@ void UEnemySpreadManager::GeneratePositions()
 	}
 }
 
+// return the closest of two positions
 bool UEnemySpreadManager::CheckCloser(FVector currentPosition, FVector oldPosition, FVector newPosition)
 {
 	float oldRange = (oldPosition - currentPosition).Length();
@@ -77,6 +84,7 @@ bool UEnemySpreadManager::CheckCloser(FVector currentPosition, FVector oldPositi
 	return false;
 }
 
+//free up the position to be usable again
 void UEnemySpreadManager::ResetPosition(int positionIndex)
 {
 	FreeSpots[positionIndex] = true;

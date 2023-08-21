@@ -33,6 +33,7 @@ void AEnemyBase::Tick(float DeltaTime)
 	Pooler->FillPool(SpawnedProjectile);
 }
 
+//shoot at the player
 void AEnemyBase::RangedAttack()
 {
 	if (!IsValid(GetWorld()->GetFirstPlayerController()->GetPawn()))
@@ -41,6 +42,7 @@ void AEnemyBase::RangedAttack()
 	Pooler->ProjectilePooler(ChildActor->GetComponentLocation(), this->GetActorRotation(), SpawnedProjectile);
 }
 
+//turn to look at the player
 void AEnemyBase::LookAtTarget()
 {
 	TObjectPtr<APawn> Target = GetWorld()->GetFirstPlayerController()->GetPawn();
@@ -57,6 +59,7 @@ void AEnemyBase::LookAtTarget()
 	}
 }
 
+//reset your given position around the player
 void AEnemyBase::ResetPosition()
 {
 	AssignedManagerPosition = false;
@@ -64,6 +67,7 @@ void AEnemyBase::ResetPosition()
 	PositionTimerFloat = 0;
 }
 
+//if you've been out of range of the player for a given time you lose your spot
 void AEnemyBase::PositionTimer(float DeltaTime)
 {
 	if(!AssignedManagerPosition || IsInRange)
